@@ -1,2 +1,2 @@
 # Library repo
-Clone and use to store your books.
+Fork, then clone and use it to store your books.

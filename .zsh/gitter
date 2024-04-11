@@ -36,14 +36,8 @@ function git_ () {
     case $1 in
 
       "upload")
-      split_concat split
-      cd ..
-            branch_name=backup-push/$USER/$(date '+%b%Y')
-            git checkout -b $branch_name
-            git add books
-            git commit -m "backup push $(date -R)"
-            git push -u origin $branch_name
-            git checkout main
+        split_concat split
+        cd ..
         git add books
         if [[ -z $2 ]]; then
             git commit -m "#auto-commit: [$(date)]"
@@ -56,13 +50,7 @@ function git_ () {
       ;;
 
       "download")
-      cd ..
-            branch_name=backup-pull/$USER/$(date '+%b%Y')
-            git checkout -b $branch_name
-            git add books
-            git commit -m "backup pull $(date -R)"
-            git push -u origin $branch_name
-            git checkout main
+        cd ..
         git pull -f
         split_concat reassemble
       ;;
