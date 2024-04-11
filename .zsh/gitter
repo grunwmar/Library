@@ -1,0 +1,76 @@
+#!/usr/bin/zsh
+
+function split_concat () {
+    QUALIFYING_FILE_SIZE=30_000_000 # bytes
+    CHUNK_SIZE=10M
+    PATH_TO_ITERATE="$(dirname $PWD)/books"
+
+    case $1 in
+      "split")
+      echo "# File list " > ../README.md
+        for file in $PATH_TO_ITERATE/**/*(.); do
+          echo -e "* " $(basename $file) "\n" >> ../README.md
+          if [[ $(stat -c %s "$file") -gt $QUALIFYING_FILE_SIZE ]]; then
+              split -b $CHUNK_SIZE --verbose $file "$file.part~"
+              rm "$file"
+          fi
+        done
+      ;;
+
+      "reassemble")
+        for file in $PATH_TO_ITERATE/**/*(.); do
+          if [[ $file == *.part~aa ]]; then
+              cat ${file//'~aa'/'~'}* > ${file//'.part~aa'/''}
+              rm ${file//'~aa'/'~'}*
+          fi
+        done
+      ;;
+
+      *)
+        echo "Invalid option"
+      ;;
+    esac
+}
+
+function git_ () {
+    case $1 in
+
+      "upload")
+      split_concat split
+      cd ..
+            branch_name=backup-push/$USER/$(date '+%b%Y')
+            git checkout -b $branch_name
+            git add books
+            git commit -m "backup push $(date -R)"
+            git push -u origin $branch_name
+            git checkout main
+        git add books
+        if [[ -z $2 ]]; then
+            git commit -m "#auto-commit: [$(date)]"
+          else
+            git commit -m "commit: $2"
+        fi
+        git push -f
+       cd books
+        split_concat reassemble
+      ;;
+
+      "download")
+      cd ..
+            branch_name=backup-pull/$USER/$(date '+%b%Y')
+            git checkout -b $branch_name
+            git add books
+            git commit -m "backup pull $(date -R)"
+            git push -u origin $branch_name
+            git checkout main
+        git pull -f
+        split_concat reassemble
+      ;;
+
+      *)
+         echo "Invalid input: $1"
+      ;;
+    esac
+}
+
+git_ $1
